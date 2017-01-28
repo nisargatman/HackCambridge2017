@@ -1,0 +1,15 @@
+// create new branch (named matt)
+git checkout -b matt
+
+// work in matt branch (or other e.g. master)
+git checkout matt
+
+// commit file.txt
+git commit file.txt -m "useful commit message"
+
+// when everything is committed in matt to push to remote
+git checkout master
+git pull
+git merge matt
+// resolve any issues
+git push
