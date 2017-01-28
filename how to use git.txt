@@ -17,3 +17,6 @@ git push
 // add new_file.txt to local
 git add new_file.txt
 git commit -m "added new file"
+
+// check status of files
+git status
