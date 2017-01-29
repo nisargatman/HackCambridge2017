@@ -12,6 +12,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewDebug;
 import android.widget.EditText;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -50,16 +51,21 @@ public class MainActivity extends AppCompatActivity {
             TableRow row = new TableRow(this);
             TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
             row.setLayoutParams(lp);
+            TextView date = new TextView(this);
+            date.setText("28/01/2017");
             TextView vendor = new TextView(this);
             vendor.setText("Cambridge Wine Merchants");
             TextView cost = new TextView(this);
-            cost.setText("£300");
+            cost.setText("£"+ String.format("%d",300+i));
+            row.addView(date);
             row.addView(vendor);
             row.addView(cost);
             table.addView(row);
         }
         return true;
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -99,6 +105,19 @@ public class MainActivity extends AppCompatActivity {
                 );
 
         startActivityForResult(chooserIntent, SELECT_PICTURE);
+
+        return;
+    }
+
+    public void openAnalytics(View v) {
+        Intent intent = new Intent(this, AnalyticActivity.class);
+        startActivity(intent);
+
+        return;
+    }
+
+    public void sync(View v) {
+        Snackbar.make(findViewById(toolbar),"Receipts synced.", Snackbar.LENGTH_LONG).setAction("Action", null).show();
 
         return;
     }
