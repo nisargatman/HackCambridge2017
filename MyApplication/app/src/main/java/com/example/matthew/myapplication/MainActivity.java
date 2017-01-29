@@ -44,10 +44,10 @@ public class MainActivity extends AppCompatActivity {
                     "{" +
                             "'receipts': {" +
                             "'0': {" +
-                            "'vendor':'a','total':'2','date':'1994/01/01'" +
+                            "'vendor':'Sains','total':'2','date':'1994/01/01'" +
                             "}," +
                             "'2': {" +
-                            "'vendor':'a','total':'2','date':'1994/01/02'" +
+                            "'vendor':'Amazon','total':'2','date':'1994/01/02'" +
                             "}" +
                             "}" +
                             "}");
@@ -146,7 +146,8 @@ public class MainActivity extends AppCompatActivity {
             }
             try {
                 InputStream inputStream = this.getContentResolver().openInputStream(data.getData());
-                Snackbar.make(findViewById(toolbar),"Picture loaded", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                Snackbar.make(findViewById(R.id.toolbar),"Picture loaded", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
