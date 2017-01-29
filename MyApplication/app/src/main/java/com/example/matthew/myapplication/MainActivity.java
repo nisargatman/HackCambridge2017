@@ -73,6 +73,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void openAnalytics(View v) {
+        Intent intent = new Intent(this, AnalyticActivity.class);
+        startActivity(intent);
+
+        return;
+    }
+
+    public void sync(View v) {
+        Snackbar.make(findViewById(toolbar),"Receipts synced.", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+
+        return;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
