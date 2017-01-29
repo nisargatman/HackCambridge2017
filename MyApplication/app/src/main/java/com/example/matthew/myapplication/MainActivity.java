@@ -3,6 +3,8 @@ package com.example.matthew.myapplication;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -11,6 +13,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.format.DateFormat;
+import android.util.Base64;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,6 +23,17 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Calendar;
@@ -147,6 +161,56 @@ public class MainActivity extends AppCompatActivity {
             try {
                 InputStream inputStream = this.getContentResolver().openInputStream(data.getData());
                 Snackbar.make(findViewById(R.id.toolbar),"Picture loaded", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                Bitmap testImage = BitmapFactory.decodeStream(inputStream);
+                double w = testImage.getWidth();
+                double h = testImage.getHeight();
+                Bitmap scaledImage;
+                int maxDim = 2000;
+                if (w > h) {
+                    if (w > maxDim) {
+                        scaledImage = Bitmap.createScaledBitmap(testImage,maxDim,(int)(h*w/maxDim),false);
+                    } else {
+                        scaledImage = testImage;
+                    }
+                } else {
+                    if (h > maxDim) {
+                        scaledImage = Bitmap.createScaledBitmap(testImage,(int)(h*w/maxDim),maxDim,false);
+                    } else {
+                        scaledImage = testImage;
+                    }
+                }
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                scaledImage.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+
+                try {
+                    JSONObject jsonObject = new JSONObject("{ 'CustomerId': 'matt', 'id': '000000123' }");
+                    jsonObject.put("image", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
+                    Snackbar.make((View) findViewById(R.id.toolbar), "Found in JSON: " + jsonObject.getString("image"), Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                    //Log.d(TAG,"Base64-encoded image length: " + String.format("%1$d",jsonObject.getString("image").length()));
+
+                    RequestQueue queue = Volley.newRequestQueue(this);
+                    String url = "http://35.167.15.229:5000/image/v1/read_text";
+                    //final TextView sillyTextView = (TextView) findViewById(R.id.mytext);
+
+                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
+                            new Response.Listener<JSONObject>() {
+                                @Override
+                                public void onResponse(JSONObject response) {
+                                    Snackbar.make((View) findViewById(R.id.toolbar), "Response: " + response.toString(), Snackbar.LENGTH_LONG)
+                                            .setAction("Action", null).show();
+                                }
+                            }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Snackbar.make((View) findViewById(R.id.toolbar), "Response: Error :(", Snackbar.LENGTH_LONG)
+                                    .setAction("Action", null).show();
+                        }
+                    });
+                    queue.add(jsonObjectRequest);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
