@@ -3,12 +3,14 @@ package com.example.matthew.myapplication;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateFormat;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,17 +22,39 @@ import android.widget.Toast;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.zip.DataFormatException;
 
 import static com.example.matthew.myapplication.R.id.toolbar;
 
 public class MainActivity extends AppCompatActivity {
 
+    ReceiptPack receiptPack;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        try {
+            //ReceiptPack receiptPack = new ReceiptPack("{ 'receipts': [{ '0': [{'vendor':'a','total':'2','date':'1994'}] }] }");
+            receiptPack = new ReceiptPack(
+                    "{" +
+                            "'receipts': {" +
+                            "'0': {" +
+                            "'vendor':'a','total':'2','date':'1994/01/01'" +
+                            "}," +
+                            "'2': {" +
+                            "'vendor':'a','total':'2','date':'1994/01/02'" +
+                            "}" +
+                            "}" +
+                            "}");
+        } catch(ReceiptPack.ReceiptException e) {
+            //((TextView)findViewById(R.id.mytext)).setText(e.getMessage());
+        }
+
         updateTable();
 
     }
@@ -48,15 +72,17 @@ public class MainActivity extends AppCompatActivity {
         // Remove previous items
         table.removeAllViews();
 
-        for (int i=0; i<30; i++) {
-            GregorianCalendar exampleDate = new GregorianCalendar();
-            exampleDate.set(2017,1,28,13,37);
-            addReceiptRow(table,"Cambridge Wine Merchants","£300", exampleDate);
+        for (int i=0; i<0; i++) {
+            addReceiptRow(table,"Cambridge Wine Merchants","£300", "28-01-2017");
+        }
+        for (Iterator<ReceiptPack.Receipt> i = receiptPack.getReceiptsIterator(); i.hasNext(); ) {
+            ReceiptPack.Receipt receipt = i.next();
+            addReceiptRow(table,receipt.getVendor(),receipt.getTotal(),receipt.getDate());
         }
         return true;
     }
 
-    public void addReceiptRow(TableLayout table, String vendorName, String total, GregorianCalendar timestamp) {
+    public void addReceiptRow(TableLayout table, String vendorName, String total, String timestamp) {
         TableRow row = new TableRow(this);
         TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
         row.setLayoutParams(lp);
