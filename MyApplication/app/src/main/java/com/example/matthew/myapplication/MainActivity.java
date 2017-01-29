@@ -115,8 +115,14 @@ public class MainActivity extends AppCompatActivity {
         row.setLayoutParams(lp);
         TextView vendor = new TextView(this);
         vendor.setText(vendorName);
+        vendor.setTextSize(20);
         TextView cost = new TextView(this);
         cost.setText(total);
+        cost.setTextSize(20);
+
+        vendor.setPadding(10, 10, 30, 10);
+        cost.setPadding(10, 10, 30, 10);
+
         row.addView(vendor);
         row.addView(cost);
         table.addView(row);
