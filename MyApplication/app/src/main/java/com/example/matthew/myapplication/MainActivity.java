@@ -20,6 +20,8 @@ import android.widget.Toast;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import static com.example.matthew.myapplication.R.id.toolbar;
 
@@ -47,20 +49,25 @@ public class MainActivity extends AppCompatActivity {
         table.removeAllViews();
 
         for (int i=0; i<30; i++) {
-            TableRow row = new TableRow(this);
-            TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
-            row.setLayoutParams(lp);
-            TextView vendor = new TextView(this);
-            vendor.setText("Cambridge Wine Merchants");
-            TextView cost = new TextView(this);
-            cost.setText("£300");
-            row.addView(vendor);
-            row.addView(cost);
-            table.addView(row);
+            GregorianCalendar exampleDate = new GregorianCalendar();
+            exampleDate.set(2017,1,28,13,37);
+            addReceiptRow(table,"Cambridge Wine Merchants","£300", exampleDate);
         }
         return true;
     }
 
+    public void addReceiptRow(TableLayout table, String vendorName, String total, GregorianCalendar timestamp) {
+        TableRow row = new TableRow(this);
+        TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
+        row.setLayoutParams(lp);
+        TextView vendor = new TextView(this);
+        vendor.setText(vendorName);
+        TextView cost = new TextView(this);
+        cost.setText(total);
+        row.addView(vendor);
+        row.addView(cost);
+        table.addView(row);
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
