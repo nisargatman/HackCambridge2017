@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    public void addReceiptRow(TableLayout table, String receiptIdentifier, String vendorName, String total, String timestamp) {
+    public void addReceiptRow(TableLayout table, final String receiptIdentifier, String vendorName, String total, String timestamp) {
         TableRow row = new TableRow(this);
         TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
         row.setLayoutParams(lp);
@@ -170,8 +170,24 @@ public class MainActivity extends AppCompatActivity {
 
         row.addView(vendor);
         row.addView(cost);
+
+
+
+        row.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                Snackbar.make((View) findViewById(R.id.toolbar), "row" + receiptIdentifier, Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                Intent intent = new Intent(v.getContext(), ReceiptActivity.class);
+                intent.putExtra("receiptID", receiptIdentifier);
+                startActivity(intent);
+            }
+        });
+
         table.addView(row);
     }
+
+
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
