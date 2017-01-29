@@ -75,6 +75,9 @@ public class ReceiptPack {
     public Iterator<Receipt> getReceiptsIterator() {
         return receipts.iterator();
     }
+    public String getJsonString() {
+        return jsonObject.toString();
+    }
 
     public class ReceiptException extends Exception {
         public ReceiptException() {

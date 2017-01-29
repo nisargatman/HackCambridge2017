@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -14,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.format.DateFormat;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,9 +35,17 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -48,25 +58,60 @@ import static com.example.matthew.myapplication.R.id.toolbar;
 public class MainActivity extends AppCompatActivity {
 
     ReceiptPack receiptPack;
+    private static final String TAG = "MainActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //ReceiptPack receiptPack = new ReceiptPack("{ 'receipts': [{ '0': [{'vendor':'a','total':'2','date':'1994'}] }] }");
+        boolean populateFake = false;
         try {
-            //ReceiptPack receiptPack = new ReceiptPack("{ 'receipts': [{ '0': [{'vendor':'a','total':'2','date':'1994'}] }] }");
-            receiptPack = new ReceiptPack(
-                    "{" +
-                            "'receipts': {" +
-                            "'0': {" +
-                            "'vendor':'Sains','total':'2','date':'1994/01/01'" +
-                            "}," +
-                            "'2': {" +
-                            "'vendor':'Amazon','total':'2','date':'1994/01/02'" +
-                            "}" +
-                            "}" +
-                            "}");
-        } catch(ReceiptPack.ReceiptException e) {
-            //((TextView)findViewById(R.id.mytext)).setText(e.getMessage());
+            FileInputStream receiptsdbFile = openFileInput("receiptsdb");
+            try {
+                Log.d(TAG,receiptsdbFile.toString());
+                InputStreamReader inputStreamReader = new InputStreamReader(receiptsdbFile);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+                Log.i("info", stringBuilder.toString());
+                receiptPack = new ReceiptPack(stringBuilder.toString());
+            } catch (ReceiptPack.ReceiptException e) {
+                e.printStackTrace();
+                populateFake = true;
+            }
+            receiptsdbFile.close();
+        } catch(IOException fileE) {
+            populateFake = true;
+        }
+        if (populateFake) {
+            try {
+                receiptPack = new ReceiptPack(
+                        "{" +
+                                "'receipts': {" +
+                                "'0': {" +
+                                "'vendor':'Sains','total':'2','date':'1994/01/01'" +
+                                "}," +
+                                "'2': {" +
+                                "'vendor':'Amazon','total':'2','date':'1994/01/02'" +
+                                "}" +
+                                "}" +
+                                "}");
+                FileOutputStream internalStorageFile = openFileOutput("receiptsdb", Context.MODE_PRIVATE);
+//                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(internalStorageFile);
+//                outputStreamWriter.append((CharSequence)receiptPack.toString());
+                internalStorageFile.write(receiptPack.getJsonString().getBytes());
+                internalStorageFile.close();
+            } catch (ReceiptPack.ReceiptException e) {
+                e.printStackTrace();
+                receiptPack = new ReceiptPack();
+            } catch (IOException e) {
+                e.printStackTrace();
+                receiptPack = new ReceiptPack();
+            }
         }
 
         updateTable();
