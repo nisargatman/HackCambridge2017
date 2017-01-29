@@ -3,33 +3,72 @@ package com.example.matthew.myapplication;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateFormat;
+import android.util.Base64;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewDebug;
 import android.widget.EditText;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.zip.DataFormatException;
 
 import static com.example.matthew.myapplication.R.id.toolbar;
 
 public class MainActivity extends AppCompatActivity {
 
+    ReceiptPack receiptPack;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        try {
+            //ReceiptPack receiptPack = new ReceiptPack("{ 'receipts': [{ '0': [{'vendor':'a','total':'2','date':'1994'}] }] }");
+            receiptPack = new ReceiptPack(
+                    "{" +
+                            "'receipts': {" +
+                            "'0': {" +
+                            "'vendor':'Sains','total':'2','date':'1994/01/01'" +
+                            "}," +
+                            "'2': {" +
+                            "'vendor':'Amazon','total':'2','date':'1994/01/02'" +
+                            "}" +
+                            "}" +
+                            "}");
+        } catch(ReceiptPack.ReceiptException e) {
+            //((TextView)findViewById(R.id.mytext)).setText(e.getMessage());
+        }
+
         updateTable();
 
     }
@@ -47,26 +86,28 @@ public class MainActivity extends AppCompatActivity {
         // Remove previous items
         table.removeAllViews();
 
-        for (int i=0; i<30; i++) {
-            TableRow row = new TableRow(this);
-            TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
-            row.setLayoutParams(lp);
-            TextView date = new TextView(this);
-            date.setText("28/01/2017");
-            TextView vendor = new TextView(this);
-            vendor.setText("Cambridge Wine Merchants");
-            TextView cost = new TextView(this);
-            cost.setText("£"+ String.format("%d",300+i));
-            row.addView(date);
-            row.addView(vendor);
-            row.addView(cost);
-            table.addView(row);
+        for (int i=0; i<0; i++) {
+            addReceiptRow(table,"Cambridge Wine Merchants","£300", "28-01-2017");
+        }
+        for (Iterator<ReceiptPack.Receipt> i = receiptPack.getReceiptsIterator(); i.hasNext(); ) {
+            ReceiptPack.Receipt receipt = i.next();
+            addReceiptRow(table,receipt.getVendor(),receipt.getTotal(),receipt.getDate());
         }
         return true;
     }
 
-
-
+    public void addReceiptRow(TableLayout table, String vendorName, String total, String timestamp) {
+        TableRow row = new TableRow(this);
+        TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
+        row.setLayoutParams(lp);
+        TextView vendor = new TextView(this);
+        vendor.setText(vendorName);
+        TextView cost = new TextView(this);
+        cost.setText(total);
+        row.addView(vendor);
+        row.addView(cost);
+        table.addView(row);
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -109,19 +150,6 @@ public class MainActivity extends AppCompatActivity {
         return;
     }
 
-    public void openAnalytics(View v) {
-        Intent intent = new Intent(this, AnalyticActivity.class);
-        startActivity(intent);
-
-        return;
-    }
-
-    public void sync(View v) {
-        Snackbar.make(findViewById(toolbar),"Receipts synced.", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-
-        return;
-    }
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -132,7 +160,58 @@ public class MainActivity extends AppCompatActivity {
             }
             try {
                 InputStream inputStream = this.getContentResolver().openInputStream(data.getData());
-                Snackbar.make(findViewById(toolbar),"Picture loaded", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                Snackbar.make(findViewById(R.id.toolbar),"Picture loaded", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                Bitmap testImage = BitmapFactory.decodeStream(inputStream);
+                double w = testImage.getWidth();
+                double h = testImage.getHeight();
+                Bitmap scaledImage;
+                int maxDim = 2000;
+                if (w > h) {
+                    if (w > maxDim) {
+                        scaledImage = Bitmap.createScaledBitmap(testImage,maxDim,(int)(h*w/maxDim),false);
+                    } else {
+                        scaledImage = testImage;
+                    }
+                } else {
+                    if (h > maxDim) {
+                        scaledImage = Bitmap.createScaledBitmap(testImage,(int)(h*w/maxDim),maxDim,false);
+                    } else {
+                        scaledImage = testImage;
+                    }
+                }
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                scaledImage.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+
+                try {
+                    JSONObject jsonObject = new JSONObject("{ 'CustomerId': 'matt', 'id': '000000123' }");
+                    jsonObject.put("image", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
+                    Snackbar.make((View) findViewById(R.id.toolbar), "Found in JSON: " + jsonObject.getString("image"), Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                    //Log.d(TAG,"Base64-encoded image length: " + String.format("%1$d",jsonObject.getString("image").length()));
+
+                    RequestQueue queue = Volley.newRequestQueue(this);
+                    String url = "http://35.167.15.229:5000/image/v1/read_text";
+                    //final TextView sillyTextView = (TextView) findViewById(R.id.mytext);
+
+                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
+                            new Response.Listener<JSONObject>() {
+                                @Override
+                                public void onResponse(JSONObject response) {
+                                    Snackbar.make((View) findViewById(R.id.toolbar), "Response: " + response.toString(), Snackbar.LENGTH_LONG)
+                                            .setAction("Action", null).show();
+                                }
+                            }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Snackbar.make((View) findViewById(R.id.toolbar), "Response: Error :(", Snackbar.LENGTH_LONG)
+                                    .setAction("Action", null).show();
+                        }
+                    });
+                    queue.add(jsonObjectRequest);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
