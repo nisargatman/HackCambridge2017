@@ -11,6 +11,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -88,13 +89,14 @@ public class MainActivity extends AppCompatActivity {
             }
             try {
                 InputStream inputStream = findViewById(R.id.app_bar).getContext().getContentResolver().openInputStream(data.getData());
+                //Log.d(data.getType());
                 Bitmap testImage = BitmapFactory.decodeStream(inputStream);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 testImage.compress(Bitmap.CompressFormat.JPEG, 100, stream);
 
                 try {
                     JSONObject jsonObject = new JSONObject("{ 'CustomerId': 'matt', 'id': '000000123' }");
-                    jsonObject.put("image", Base64.encode(stream.toByteArray(), Base64.DEFAULT));
+                    jsonObject.put("image", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
                     Snackbar.make((View) findViewById(R.id.app_bar), "Found in JSON: " + jsonObject.getString("image"), Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
 
