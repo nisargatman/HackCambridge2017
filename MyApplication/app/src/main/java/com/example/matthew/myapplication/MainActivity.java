@@ -145,16 +145,16 @@ public class MainActivity extends AppCompatActivity {
         table.removeAllViews();
 
         for (int i=0; i<0; i++) {
-            addReceiptRow(table,"Cambridge Wine Merchants","£300", "28-01-2017");
+            addReceiptRow(table,"uneeq","Cambridge Wine Merchants","£300", "28-01-2017");
         }
         for (Iterator<ReceiptPack.Receipt> i = receiptPack.getReceiptsIterator(); i.hasNext(); ) {
             ReceiptPack.Receipt receipt = i.next();
-            addReceiptRow(table,receipt.getVendor(),receipt.getTotal(),receipt.getDate());
+            addReceiptRow(table,receipt.getIdentifier(),receipt.getVendor(),receipt.getTotal(),receipt.getDate());
         }
         return true;
     }
 
-    public void addReceiptRow(TableLayout table, String vendorName, String total, String timestamp) {
+    public void addReceiptRow(TableLayout table, String receiptIdentifier, String vendorName, String total, String timestamp) {
         TableRow row = new TableRow(this);
         TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
         row.setLayoutParams(lp);

@@ -61,7 +61,7 @@ public class ReceiptPack {
                 String thisKey = receiptKeys.next();
                 Log.d(TAG, "Trying the key: " + thisKey);
                 try {
-                    receipts.add(new Receipt(jsonReceipts.getJSONObject(thisKey)));
+                    receipts.add(new Receipt(thisKey,jsonReceipts.getJSONObject(thisKey)));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 } catch (ReceiptException e) {
@@ -91,13 +91,16 @@ public class ReceiptPack {
     public class Receipt {
 
         private JSONObject jsonObject;
+        private String identifier;
         private boolean isValid;
 
-        public Receipt(JSONObject jsonReceipt) throws ReceiptException{
+        public Receipt(String identifier, JSONObject jsonReceipt) throws ReceiptException{
             jsonObject = jsonReceipt;
+            this.identifier = identifier;
             validateJson();
         }
-        public Receipt(String jsonReceipt) throws ReceiptException {
+        public Receipt(String identifier, String jsonReceipt) throws ReceiptException {
+            this.identifier = identifier;
             try {
                 jsonObject = new JSONObject(jsonReceipt);
                 validateJson();
@@ -139,6 +142,9 @@ public class ReceiptPack {
                 e.printStackTrace();
                 return "??/??/????";
             }
+        }
+        public String getIdentifier() {
+            return identifier;
         }
 
     }
