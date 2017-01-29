@@ -67,9 +67,10 @@ public class MainActivity extends AppCompatActivity {
         //ReceiptPack receiptPack = new ReceiptPack("{ 'receipts': [{ '0': [{'vendor':'a','total':'2','date':'1994'}] }] }");
         boolean populateFake = false;
         try {
-            FileInputStream receiptsdbFile = openFileInput("receiptsdb");
+            receiptPack = new ReceiptPack();
+            receiptPack.readFromStorage(openFileInput("receiptsdb"));
+            /*FileInputStream receiptsdbFile = openFileInput("receiptsdb");
             try {
-                Log.d(TAG,receiptsdbFile.toString());
                 InputStreamReader inputStreamReader = new InputStreamReader(receiptsdbFile);
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 String receiveString = "";
@@ -77,15 +78,13 @@ public class MainActivity extends AppCompatActivity {
                 while ( (receiveString = bufferedReader.readLine()) != null ) {
                     stringBuilder.append(receiveString);
                 }
-                Log.i("info", stringBuilder.toString());
                 receiptPack = new ReceiptPack(stringBuilder.toString());
             } catch (ReceiptPack.ReceiptException e) {
                 e.printStackTrace();
-                populateFake = true;
             }
-            receiptsdbFile.close();
+            receiptsdbFile.close();*/
         } catch(IOException fileE) {
-            populateFake = true;
+            fileE.printStackTrace();
         }
         if (populateFake) {
             try {
@@ -101,10 +100,7 @@ public class MainActivity extends AppCompatActivity {
                                 "}" +
                                 "}");
                 FileOutputStream internalStorageFile = openFileOutput("receiptsdb", Context.MODE_PRIVATE);
-//                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(internalStorageFile);
-//                outputStreamWriter.append((CharSequence)receiptPack.toString());
-                internalStorageFile.write(receiptPack.getJsonString().getBytes());
-                internalStorageFile.close();
+                receiptPack.writeToStorage(internalStorageFile);
             } catch (ReceiptPack.ReceiptException e) {
                 e.printStackTrace();
                 receiptPack = new ReceiptPack();
@@ -126,6 +122,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sync(View v) {
+        try {
+            receiptPack.insertReceiptData(Calendar.getInstance().toString(), new JSONObject("{'vendor':'a','total':'2','date':'1994'}"));
+            try {
+                FileOutputStream internalStorageFile = openFileOutput("receiptsdb", Context.MODE_PRIVATE);
+                receiptPack.writeToStorage(internalStorageFile);
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        } catch(JSONException e) {
+            e.printStackTrace();
+        }
+        updateTable();
         Snackbar.make(findViewById(toolbar),"Receipts synced.", Snackbar.LENGTH_LONG).setAction("Action", null).show();
 
         return;

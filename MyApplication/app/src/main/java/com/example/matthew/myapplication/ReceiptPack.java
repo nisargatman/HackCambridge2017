@@ -1,11 +1,17 @@
 package com.example.matthew.myapplication;
 
+import android.content.Context;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.Console;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -57,6 +63,7 @@ public class ReceiptPack {
         try {
             JSONObject jsonReceipts = jsonObject.getJSONObject(JSON_RECEIPTS_HOLDER);
             Iterator<String> receiptKeys = jsonReceipts.keys();
+            receipts.clear();
             for (; receiptKeys.hasNext(); ) {
                 String thisKey = receiptKeys.next();
                 Log.d(TAG, "Trying the key: " + thisKey);
@@ -76,7 +83,68 @@ public class ReceiptPack {
         return receipts.iterator();
     }
     public String getJsonString() {
+        repackJsonObject();
         return jsonObject.toString();
+    }
+
+    public void repackJsonObject() {
+        JSONObject newJsonObject = new JSONObject();
+        JSONObject receiptsHolder = new JSONObject();
+        for (Iterator<Receipt> i = getReceiptsIterator(); i.hasNext(); ) {
+            Receipt thisReceipt = i.next();
+            try {
+                receiptsHolder.put(thisReceipt.getIdentifier(), thisReceipt.getJSONObject());
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            newJsonObject.put(JSON_RECEIPTS_HOLDER, receiptsHolder);
+        } catch(JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean insertReceiptData(String identifier, JSONObject jsonObject) {
+        try {
+            Receipt receipt = new Receipt(identifier, jsonObject);
+            receipts.add(receipt);
+            repackJsonObject();
+            Log.d("asd",this.jsonObject.toString());
+            return true;
+        } catch(ReceiptException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public void readFromStorage(FileInputStream receiptsdbFile) {
+        try {
+            InputStreamReader inputStreamReader = new InputStreamReader(receiptsdbFile);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String receiveString = "";
+            StringBuilder stringBuilder = new StringBuilder();
+            while ( (receiveString = bufferedReader.readLine()) != null ) {
+                stringBuilder.append(receiveString);
+            }
+            this.jsonObject = new JSONObject(stringBuilder.toString());
+            populateFromJSON();
+            Log.d("ReceiptPack","Managed to read in from DB file");
+            receiptsdbFile.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void writeToStorage(FileOutputStream internalStorageFile) {
+//                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(internalStorageFile);
+//                outputStreamWriter.append((CharSequence)receiptPack.toString());
+        try {
+            internalStorageFile.write(getJsonString().getBytes());
+            Log.d("ReceiptPack",getJsonString());
+            Log.d("ReceiptPack","Managed to write to DB file");
+            internalStorageFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public class ReceiptException extends Exception {
@@ -145,6 +213,9 @@ public class ReceiptPack {
         }
         public String getIdentifier() {
             return identifier;
+        }
+        public JSONObject getJSONObject() {
+            return jsonObject;
         }
 
     }
